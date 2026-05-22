@@ -49,7 +49,7 @@ export default {
 
       const { phone, code } = body;
       if (!phone || !code) {
-        return jsonResponse({ error: 'phone and code are required' }, 400);
+        return jsonResponse({ error: `phone and code are required: ${body}`}, 400);
       }
 
       await env.OTP_STORE.put(phone, JSON.stringify({ code: String(code), ts: Date.now() }));

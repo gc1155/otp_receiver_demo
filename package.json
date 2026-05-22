@@ -1,0 +1,15 @@
+{
+  "name": "otp-receiver-demo",
+  "version": "1.0.0",
+  "description": "Cloudflare Worker – receives Auth0 OTP codes so a client can poll for them (dev only).",
+  "private": true,
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "vitest": "^3.1.4",
+    "wrangler": "^4.59.1"
+  }
+}

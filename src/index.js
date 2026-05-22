@@ -18,11 +18,6 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'Content-Type',
 };
 
-// In-memory store: phone → { code, ts }
-// Note: Cloudflare Workers are stateful within a single isolate instance but
-// state is not shared across instances.  This is intentional for a dev demo.
-const codes = {};
-
 function jsonResponse(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -31,7 +26,7 @@ function jsonResponse(data, status = 200) {
 }
 
 export default {
-  async fetch(request) {
+  async fetch(request, env) {
     const url = new URL(request.url);
 
     // CORS preflight
@@ -57,7 +52,7 @@ export default {
         return jsonResponse({ error: 'phone and code are required' }, 400);
       }
 
-      codes[phone] = { code: String(code), ts: Date.now() };
+      await env.OTP_STORE.put(phone, JSON.stringify({ code: String(code), ts: Date.now() }));
       return jsonResponse({ ok: true });
     }
 
@@ -68,14 +63,14 @@ export default {
         return jsonResponse({ error: 'phone query parameter is required' }, 400);
       }
 
-      const entry = codes[phone];
-      if (!entry) {
+      const raw = await env.OTP_STORE.get(phone);
+      if (!raw) {
         return jsonResponse({});
       }
 
       // Remove the code once it has been retrieved (one-time use)
-      delete codes[phone];
-      return jsonResponse(entry);
+      await env.OTP_STORE.delete(phone);
+      return jsonResponse(JSON.parse(raw));
     }
 
     // DELETE /otp?phone=… – explicitly clear a stored code
@@ -84,7 +79,7 @@ export default {
       if (!phone) {
         return jsonResponse({ error: 'phone query parameter is required' }, 400);
       }
-      delete codes[phone];
+      await env.OTP_STORE.delete(phone);
       return jsonResponse({ ok: true });
     }
 
